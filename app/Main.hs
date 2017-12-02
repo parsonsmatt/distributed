@@ -1,4 +1,16 @@
 module Main where
 
+import Network.Transport.TCP (createTransport, defaultTCPParameters)
+import Control.Distributed.Process
+import Control.Distributed.Process.Node
+
 main :: IO ()
-main = putStrLn "Hello, world!"
+main = do
+    Right t <- createTransport "127.0.0.1" "10501" defaultTCPParameters
+    node <- newLocalNode t initRemoteTable
+    _ <- runProcess node $ do
+        self <- getSelfPid
+        send self "hello"
+        hello <- expect :: Process String
+        liftIO $ putStrLn hello
+    return ()
