@@ -12,12 +12,19 @@ description:         Please see the README on Github at <https://github.com/pars
 extra-source-files:
 - README.md
 
+ghc-options:
+- -Wall
+- -fwarn-incomplete-uni-patterns
+- -fwarn-incomplete-record-updates
+
 dependencies:
 - base >= 4.7 && < 5
 - distributed-process
 - network-transport-tcp
 - optparse-applicative
 - bytestring
+- mwc-random
+- vector
 
 library:
   source-dirs: src

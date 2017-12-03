@@ -1,25 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
-module Main where
+module Main (main) where
 
-import           Control.Concurrent               (threadDelay)
-import           Control.Distributed.Process
-import           Control.Distributed.Process.Node
-import           Control.Monad                    (forever)
-import           Data.Monoid
-import           Network.Transport.TCP            (createTransport,
-                                                   defaultTCPParameters)
-
-import           Data.ByteString                  (ByteString)
-import qualified Data.ByteString.Char8            as BS8
+import           Data.Vector                      (fromList)
+import           Data.Word                        (Word32)
 import           Options.Applicative
+import           System.Random.MWC                (createSystemRandom,
+                                                   initialize)
+
+import qualified Distributed
+
+main :: IO ()
+main = do
+    Args{..} <- execParser argsParser
+    seed <- maybe createSystemRandom (initialize . fromList . (:[])) argsWithSeed
+    Distributed.run seed (Distributed.SendFor argsSendFor) (Distributed.WaitFor argsWaitFor)
 
 data Args
     = Args
-    { argsSendFor  :: Double
-    , argsWaitFor  :: Double
-    , argsWithSeed :: Maybe ByteString
+    { argsSendFor  :: Int
+    , argsWaitFor  :: Int
+    , argsWithSeed :: Maybe Word32
     }
 
 argsParser :: ParserInfo Args
@@ -29,20 +31,20 @@ argsParser = info (args <**> helper) $ mconcat
     , header "Funtimes with Cloud Haskell!"
     ]
   where
-    sendForArg = 
+    sendForArg =
         option auto $ mconcat
             [ long "send-for"
             , metavar "DOUBLE"
             , help "How long to send messagers to neighbor nodes."
             ]
-    waitForArg = 
-        option auto $ mconcat 
+    waitForArg =
+        option auto $ mconcat
             [ long "wait-for"
             , metavar "DOUBLE"
-            , help "How long to wait after sending messages." 
+            , help "How long to wait after sending messages."
             ]
-    withSeedArg = 
-       optional . fmap BS8.pack . strOption . mconcat $ 
+    withSeedArg =
+       optional . option auto . mconcat $
            [ long "with-seed"
            , metavar "SEED"
            , help "The seed for the randon number generator"
@@ -51,28 +53,3 @@ argsParser = info (args <**> helper) $ mconcat
         <$> sendForArg
         <*> waitForArg
         <*> withSeedArg
-
-main :: IO ()
-main = do
-    Args {..} <- execParser argsParser
-    Right t <- createTransport "127.0.0.1" "10501" defaultTCPParameters
-    node <- newLocalNode t initRemoteTable
-    _ <- runProcess node $ do
-        echoPid <- spawnLocal $ forever $
-            receiveWait
-                [ match $ \(sender, msg) -> send sender (msg :: String)
-                , match $ \msg -> say $ "handling " ++ msg
-                ]
-
-        say "sending messages"
-        send echoPid ("hello" :: String)
-        self <- getSelfPid
-        send echoPid (self, "hello world" :: String)
-
-        m <- expectTimeout 10000000
-        case m of
-            Nothing -> die ("no words" :: String)
-            Just s  -> say $ "got " ++ s ++ " back!"
-
-        liftIO $ threadDelay 20000000
-    return ()
