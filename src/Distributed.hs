@@ -37,6 +37,13 @@ sendingProcess :: GenIO -> Backend -> Process ()
 sendingProcess gen backend = forever $ do
     peers <- liftIO $ findPeers backend 1e5
 
+    mshouldStop <- receiveTimeout 0 
+        [ match $ \StopSending -> pure ()
+        ]
+
+    for_ mshouldStop $ \_ ->
+        die "I am done sending messages."
+
     n <- liftIO $ uniformR (0, 1) gen
     say $ "Sending a new number: " ++ show n
     say $ "Found peers: " ++ show peers
