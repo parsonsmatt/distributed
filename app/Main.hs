@@ -6,15 +6,18 @@ module Main (main) where
 import qualified Data.Vector         as V
 import           Data.Word           (Word32)
 import           Options.Applicative
-import           System.Random.MWC   (createSystemRandom, initialize)
+import           System.Random.MWC   (createSystemRandom, initialize, GenIO)
 
 import qualified Distributed
 
 main :: IO ()
 main = do
     Args{..} <- execParser argsParser
-    seed <- maybe createSystemRandom (initialize . V.replicate 256) argsWithSeed
+    seed <- maybe createSystemRandom mkRandomSeed argsWithSeed
     Distributed.run seed (Distributed.SendFor argsSendFor) (Distributed.WaitFor argsWaitFor)
+
+mkRandomSeed :: Word32 -> IO GenIO
+mkRandomSeed = initialize . V.iterateN 255 succ
 
 data Args
     = Args

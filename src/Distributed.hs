@@ -25,11 +25,12 @@ run gen sendFor waitFor = do
     node <- newLocalNode t
     appState <- initialAppState
     runProcess node $ do
-        _ <- spawnLocal $ do
-            receivingPid <- spawnLocal $ receivingProcess appState
-            sendingPid <- spawnLocal $ sendingProcess gen t
-            _ <- spawnLocal $ timerProcess sendFor waitFor sendingPid receivingPid
-            pure ()
+        receivingPid <- spawnLocal $ do
+            self <- getSelfPid
+            register "newnumber" self
+            receivingProcess appState
+        sendingPid <- spawnLocal $ sendingProcess gen t
+        _ <- spawnLocal $ timerProcess sendFor waitFor sendingPid receivingPid
         pure ()
 
     takeMVar (appCanStop appState)
