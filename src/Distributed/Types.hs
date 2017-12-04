@@ -3,6 +3,7 @@
 
 module Distributed.Types where
 
+import Control.Concurrent (MVar, newEmptyMVar)
 import           Data.Binary   (Binary)
 import           Data.Typeable (Typeable)
 import           GHC.Generics  (Generic)
@@ -38,6 +39,26 @@ type Messages = [Double]
 
 data AppState = AppState
     { appReceivedMessages :: Messages
+    , appCanStop :: MVar ()
+    }
+
+finalAnswer :: AppState -> ([Double], Double)
+finalAnswer appState = (msgs, sumByIndex)
+  where
+    sumByIndex = sum $ zipWith (*) [1..] msgs
+    msgs = appReceivedMessages appState
+
+initialAppState :: IO AppState
+initialAppState = do
+    appStop <- newEmptyMVar
+    pure AppState 
+        { appReceivedMessages = []
+        , appCanStop = appStop
+        }
+
+addNumber :: Double -> AppState -> AppState
+addNumber d appState = appState
+    { appReceivedMessages = d : appReceivedMessages appState
     }
 
 -- | Calculate the time to spend waiting in microseconds after the sending

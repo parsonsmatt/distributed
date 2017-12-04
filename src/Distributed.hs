@@ -23,15 +23,17 @@ run :: GenIO -> SendFor -> WaitFor -> IO ()
 run gen sendFor waitFor = do
     t <- initializeBackend "127.0.0.1" "10501" remoteTable
     node <- newLocalNode t
+    appState <- initialAppState
     runProcess node $ do
         _ <- spawnLocal $ do
-            receivingPid <- spawnLocal $ pure ()
+            receivingPid <- spawnLocal $ receivingProcess appState
             sendingPid <- spawnLocal $ sendingProcess gen t
             _ <- spawnLocal $ timerProcess sendFor waitFor sendingPid receivingPid
             pure ()
         pure ()
 
-    threadDelay (calculateSendTime sendFor + calculateWaitTime waitFor)
+    takeMVar (appCanStop appState)
+    threadDelay (2*1e6)
 
 sendingProcess :: GenIO -> Backend -> Process ()
 sendingProcess gen backend = forever $ do
@@ -49,6 +51,22 @@ sendingProcess gen backend = forever $ do
     say $ "Found peers: " ++ show peers
     for_ peers $ \peer ->
         nsendRemote peer "newnumber" (NewNumber n)
+
+receivingProcess :: AppState -> Process ()
+receivingProcess appState = do
+    say $ "Current state: " ++ show (appReceivedMessages appState)
+    md <- receiveWait 
+        [ match $ \(NewNumber d) -> pure (Just d)
+        , match $ \Shutdown ->     pure Nothing
+        ]
+    case md of
+        Nothing -> do
+            say "Received a Shutdown message, so stopping."
+            say $ "Final Answer: " ++ show (finalAnswer appState)
+            liftIO $ putMVar (appCanStop appState) ()
+        Just d -> do
+            say $ "Received: " ++ show d
+            receivingProcess (addNumber d appState)
 
 timerProcess :: SendFor -> WaitFor -> ProcessId -> ProcessId -> Process ()
 timerProcess sendFor waitFor sendingPid receivingPid = do
