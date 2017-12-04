@@ -17,6 +17,7 @@
 #  location: "./custom-snapshot.yaml"
 resolver: lts-9.14
 
+
 # User packages to be built.
 # Various formats can be used as shown in the example below.
 #
@@ -41,6 +42,9 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - distributed-process-0.7.3
+- distributed-process-simplelocalnet-0.2.4
+- network-transport-0.5.2
+- network-transport-tcp-0.6.0
  
 # Override default flag values for local packages and extra-deps
 # flags: {}

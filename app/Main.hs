@@ -3,18 +3,17 @@
 
 module Main (main) where
 
-import           Data.Vector                      (fromList)
-import           Data.Word                        (Word32)
+import qualified Data.Vector         as V
+import           Data.Word           (Word32)
 import           Options.Applicative
-import           System.Random.MWC                (createSystemRandom,
-                                                   initialize)
+import           System.Random.MWC   (createSystemRandom, initialize)
 
 import qualified Distributed
 
 main :: IO ()
 main = do
     Args{..} <- execParser argsParser
-    seed <- maybe createSystemRandom (initialize . fromList . (:[])) argsWithSeed
+    seed <- maybe createSystemRandom (initialize . V.replicate 256) argsWithSeed
     Distributed.run seed (Distributed.SendFor argsSendFor) (Distributed.WaitFor argsWaitFor)
 
 data Args
