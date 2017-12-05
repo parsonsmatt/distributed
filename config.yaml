@@ -1,0 +1,8 @@
+# The host to use for this node.
+host: "127.0.0.1"
+# The port to use for this node. Using "0" will cause the OS to assign a port.
+port: "10501"
+# nodes contains a list of host:port pairs that are used to connect to exterior
+# nodes. The node will not attempt to connect to 
+# nodes:
+# - 

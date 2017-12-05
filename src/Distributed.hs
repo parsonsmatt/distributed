@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE NumDecimals #-}
 
 module Distributed
@@ -14,6 +15,7 @@ import           Data.Foldable                                      (for_)
 import           System.Random.MWC                                  (GenIO,
                                                                      uniformR)
 
+import           Distributed.Config
 import           Distributed.Types
 
 remoteTable :: RemoteTable
@@ -21,7 +23,8 @@ remoteTable = initRemoteTable
 
 run :: GenIO -> SendFor -> WaitFor -> IO ()
 run gen sendFor waitFor = do
-    t <- initializeBackend "127.0.0.1" "10501" remoteTable
+    Config{..} <- loadConfigFile
+    t <- initializeBackend configHost configPort remoteTable
     node <- newLocalNode t
     appState <- initialAppState
     runProcess node $ do
@@ -39,13 +42,15 @@ run gen sendFor waitFor = do
 sendingProcess :: GenIO -> Backend -> Process ()
 sendingProcess gen backend = forever $ do
     peers <- liftIO $ findPeers backend 1e5
+    nodeId <- getSelfNode
+    say $ show nodeId
 
-    mshouldStop <- receiveTimeout 0 
+    mshouldStop <- receiveTimeout 0
         [ match $ \StopSending -> pure ()
         ]
 
     for_ mshouldStop $ \_ ->
-        die "I am done sending messages."
+        die ("I am done sending messages." :: String)
 
     n <- liftIO $ uniformR (0, 1) gen
     say $ "Sending a new number: " ++ show n
@@ -56,7 +61,7 @@ sendingProcess gen backend = forever $ do
 receivingProcess :: AppState -> Process ()
 receivingProcess appState = do
     say $ "Current state: " ++ show (appReceivedMessages appState)
-    md <- receiveWait 
+    md <- receiveWait
         [ match $ \(NewNumber d) -> pure (Just d)
         , match $ \Shutdown ->     pure Nothing
         ]

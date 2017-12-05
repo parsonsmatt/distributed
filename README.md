@@ -4,6 +4,10 @@ To build: `stack build`
 
 To run: `stack exec -- distributed-exe`
 
+The program expects to find a `config.yaml` located in the directory relative
+to where it is run. The repository contains an example `config.yaml` file with
+documentation around the expected format.
+
 Help text:
 
 ```bash

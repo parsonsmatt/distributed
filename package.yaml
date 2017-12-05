@@ -19,15 +19,19 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
-- distributed-process
-- distributed-process-simplelocalnet
-- network-transport-tcp
-- optparse-applicative
-- bytestring
-- mwc-random
-- vector
 - async
 - binary
+- bytestring
+- distributed-process
+- distributed-process-simplelocalnet
+- mwc-random
+- network-transport
+- network-transport-tcp
+- optparse-applicative
+- safe-exceptions
+- text
+- vector
+- yaml
 
 library:
   source-dirs: src
