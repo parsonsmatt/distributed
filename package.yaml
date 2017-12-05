@@ -20,16 +20,20 @@ ghc-options:
 dependencies:
 - base >= 4.7 && < 5
 - async
+- foldl
 - binary
 - bytestring
+- cryptonite
 - distributed-process
 - distributed-process-simplelocalnet
+- memory
 - mwc-random
 - network-transport
 - network-transport-tcp
 - optparse-applicative
 - safe-exceptions
 - text
+- time
 - vector
 - yaml
 

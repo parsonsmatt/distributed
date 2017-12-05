@@ -16,6 +16,7 @@ import           System.Random.MWC                                  (GenIO,
                                                                      uniformR)
 
 import           Distributed.Config
+import Distributed.BlockChain
 import           Distributed.Types
 
 remoteTable :: RemoteTable
